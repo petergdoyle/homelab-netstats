@@ -36,11 +36,13 @@ To run via Docker:
 
 | Command | Action |
 | :--- | :--- |
-| `make dev` | Creates a Python virtual environment, installs dependencies, and runs the Streamlit app on `http://localhost:8501`. |
-| `make build` | Builds the local production-ready Docker image `homelab-netstats:latest`. |
-| `make run` | Starts the containerized app in detached mode using Docker Compose. |
-| `make stop` | Stops the running Docker Compose container stack. |
-| `make clean` | Removes the `.venv` directory and temporary Python files. |
+| `make` | Runs the default target (`make help`), displaying a formatted help menu of all commands. |
+| `make env` | Installs system/Python dependencies and creates the `.venv` virtual environment. |
+| `make dev` | Launches the Streamlit server locally on `http://localhost:8501`. (Automatically runs `make env` first if the virtual environment doesn't exist). |
+| `make docker-build` | Builds the production-ready Docker container `homelab-netstats:latest`. |
+| `make docker-run` | Runs the containerized application via Docker Compose in detached mode. |
+| `make docker-stop` | Stops the active Docker Compose stack. |
+| `make clean` | Removes the local virtual environment and Python compiler caches. |
 
 ---
 
