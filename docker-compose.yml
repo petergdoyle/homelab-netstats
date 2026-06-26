@@ -1,0 +1,9 @@
+version: "3.8"
+
+services:
+  homelab-netstats:
+    build: .
+    container_name: homelab-netstats
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
