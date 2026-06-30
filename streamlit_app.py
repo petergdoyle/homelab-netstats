@@ -185,7 +185,6 @@ with col2:
         "Cloudflare (1.1.1.1)": "1.1.1.1",
         "Google (8.8.8.8)": "8.8.8.8",
         "Tailscale Subnet Router (205)": "192.168.20.205",
-        "Tailscale MagicDNS": "100.100.100.100",
         "Cloudflare Tunnel Daemon (213)": "192.168.20.213"
     }
     
@@ -227,15 +226,7 @@ with col2:
                 "Result": res_ag if res_ag else "failed",
                 "Time (ms)": f"{dur_ag:.1f} ms"
             })
-            # 3. Resolve using Tailscale MagicDNS
-            res_ts, dur_ts = dns_lookup(dhost, "100.100.100.100")
-            dns_metrics.append({
-                "Query Name": dhost,
-                "Resolver": "Tailscale MagicDNS (100.100.100.100)",
-                "Result": res_ts if res_ts else "failed",
-                "Time (ms)": f"{dur_ts:.1f} ms"
-            })
-            
+
         st.table(pd.DataFrame(dns_metrics))
     else:
         st.info("Click the button above to execute live ping and DNS diagnostics.")
