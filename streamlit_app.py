@@ -5,6 +5,7 @@ import pandas as pd
 import time
 import os
 import platform
+import urllib.request
 
 st.set_page_config(
     page_title="Homelab Network Diagnostics",
@@ -118,6 +119,23 @@ def dns_lookup(host, server=None):
     duration_ms = (time.time() - start) * 1000
     return out, duration_ms
 
+def get_cloudflare_trace():
+    try:
+        req = urllib.request.Request(
+            "https://www.cloudflare.com/cdn-cgi/trace",
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+        with urllib.request.urlopen(req, timeout=2) as response:
+            text = response.read().decode("utf-8")
+            data = {}
+            for line in text.strip().split("\n"):
+                parts = line.split("=", 1)
+                if len(parts) == 2:
+                    data[parts[0]] = parts[1]
+            return data
+    except Exception as e:
+        return {"error": str(e)}
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Dashboard UI Layout
 # ──────────────────────────────────────────────────────────────────────────────
@@ -144,6 +162,19 @@ with col1:
     else:
         st.write("File `/etc/resolv.conf` not found.")
 
+    st.markdown("---")
+    st.subheader("🌐 Public WAN & Cloudflare Edge")
+    trace = get_cloudflare_trace()
+    if "error" not in trace:
+        st.success("Connected to Cloudflare Edge")
+        st.markdown(f"**Public WAN IP**: `{trace.get('ip', 'Unknown')}`")
+        st.markdown(f"**Cloudflare Data Center**: `{trace.get('colo', 'Unknown')}` ({trace.get('loc', 'Unknown')})")
+        st.markdown(f"**Protocol / Security**: `{trace.get('http', 'Unknown')}` / `{trace.get('tls', 'Unknown')}`")
+        st.markdown(f"**Warp Status**: `{trace.get('warp', 'off')}`")
+    else:
+        st.error("Offline / Unable to reach Cloudflare Edge")
+        st.caption(f"Error details: `{trace.get('error')}`")
+
 with col2:
     st.subheader("⚡ Active Latency & DNS Verification")
     
@@ -152,7 +183,10 @@ with col2:
         "Default Gateway": gw,
         "AdGuard DNS": "192.168.20.214",
         "Cloudflare (1.1.1.1)": "1.1.1.1",
-        "Google (8.8.8.8)": "8.8.8.8"
+        "Google (8.8.8.8)": "8.8.8.8",
+        "Tailscale Subnet Router (205)": "192.168.20.205",
+        "Tailscale MagicDNS": "100.100.100.100",
+        "Cloudflare Tunnel Daemon (213)": "192.168.20.213"
     }
     
     if st.button("🔄 Run Telemetry Ping Diagnostics", type="primary"):
@@ -192,6 +226,14 @@ with col2:
                 "Resolver": "AdGuard (192.168.20.214)",
                 "Result": res_ag if res_ag else "failed",
                 "Time (ms)": f"{dur_ag:.1f} ms"
+            })
+            # 3. Resolve using Tailscale MagicDNS
+            res_ts, dur_ts = dns_lookup(dhost, "100.100.100.100")
+            dns_metrics.append({
+                "Query Name": dhost,
+                "Resolver": "Tailscale MagicDNS (100.100.100.100)",
+                "Result": res_ts if res_ts else "failed",
+                "Time (ms)": f"{dur_ts:.1f} ms"
             })
             
         st.table(pd.DataFrame(dns_metrics))
